@@ -10,4 +10,4 @@ Thank you to all team mates who already contribute to this group project!
 
 [MIT](https://opensource.org/licenses/MIT)
 
-Copyright (c) 2013-present group 66
+Copyright (c) 2022-present group 66
