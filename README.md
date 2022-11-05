@@ -1,5 +1,6 @@
 ## Star History
-![starcharts stargazers over time](https://starchart.cc/djm-xjtu/Group66-ML-project.svg)
+
+[![Star History Chart](https://api.star-history.com/svg?repos=djm-xjtu/Group66-ML-project&type=Date)](https://star-history.com/#djm-xjtu/Group66-ML-project&Date)
 
 ## Contribution
 
