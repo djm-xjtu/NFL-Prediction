@@ -20,4 +20,5 @@ if __name__ == '__main__':
 
     # train model
     model.bestFit('data/data_preprocessed.csv')
+    model.train_model()
 

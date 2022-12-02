@@ -1,3 +1,5 @@
+import datetime
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -15,9 +17,9 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import roc_curve, auc
 
 import warnings
-
 with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    warnings.filterwarnings("ignore",category=DeprecationWarning)
+
 
 
 def bestFit(filename):
@@ -56,89 +58,103 @@ def bestFit(filename):
     print("The best fit model is: " + clean_models[0][0] + "\n" + "The score is: " + clean_models[0][1])
 
 
-# run the function
-bestFit("data_preprocessed.csv")
 
-# Training the model:
-path = "data/"
-df = pd.read_csv(path + "data_preprocessed.csv")
-train = df.copy()
-test = df.copy()
-train = train.loc[train['schedule_season'] < 2017]
-test = test.loc[test['schedule_season'] > 2016]
-X_train = train[
-    ['schedule_week', 'spread_favorite', 'over_under_line', 'home_favorite', 'team_away_current_win_pct',
-     'team_home_current_win_pct',
-     'team_home_lastseason_win_pct', 'team_away_lastseason_win_pct', 'division_game', 'elo_prob1']]
-y_train = train['result']
 
-X_test = test[['schedule_week', 'spread_favorite', 'over_under_line', 'home_favorite', 'team_away_current_win_pct',
-               'team_home_current_win_pct',
-               'team_home_lastseason_win_pct', 'team_away_lastseason_win_pct', 'division_game', 'elo_prob1']]
-y_test = test['result']
+def train_model():
+    # Training the model:
+    st = datetime.datetime.now()
+    path = "data/"
+    df = pd.read_csv(path + "data_preprocessed.csv")
+    train = df.copy()
+    test = df.copy()
+    train = train.loc[train['schedule_season'] < 2017]
+    test = test.loc[test['schedule_season'] > 2016]
+    X_train = train[
+        ['schedule_week', 'spread_favorite', 'over_under_line', 'home_favorite', 'team_away_current_win_pct',
+         'team_home_current_win_pct',
+         'team_home_lastseason_win_pct', 'team_away_lastseason_win_pct', 'division_game', 'elo_prob1']]
+    y_train = train['result']
 
-logist = LogisticRegression(solver='liblinear', max_iter=250)
-logist.fit(X_train, y_train)
-y_prediction = logist.predict(X_test)
-y_predicted = logist.predict_proba(X_test)[:, 1]
+    X_test = test[['schedule_week', 'spread_favorite', 'over_under_line', 'home_favorite', 'team_away_current_win_pct',
+                   'team_home_current_win_pct',
+                   'team_home_lastseason_win_pct', 'team_away_lastseason_win_pct', 'division_game', 'elo_prob1']]
+    y_test = test['result']
 
-# Find the importance of the feature
-target_names = ['class 0', 'class 1']
-print(classification_report(y_test, y_prediction, target_names=target_names))
+    logist = LogisticRegression(solver='liblinear', max_iter=250)
+    logist.fit(X_train, y_train)
+    y_prediction = logist.predict(X_test)
+    y_predicted = logist.predict_proba(X_test)[:, 1]
 
-# Draw the Confusion matrix
-mat = metrics.confusion_matrix(y_test, y_prediction)
-score = logist.score(X_test, y_test)
-plt.figure(figsize=(6.5, 5))
-sns.heatmap(mat, annot=True, fmt="g")
-plt.title('LogisticRegression \nAccuracy:{0:.2f}'.format(score))
-plt.xlabel('Predicted')
-plt.ylabel('True')
-plt.show()
+    ed = datetime.datetime.now()
+    print('Time used is', (ed - st).microseconds, 'ms')
 
-# Finding the fpr and tpr for the threasholds of the classification
-fpr, tpr, threshold = roc_curve(y_test, y_prediction)
-rocAuc = auc(fpr, tpr)
+    # Find the importance of the feature
+    target_names = ['class 0', 'class 1']
+    print(classification_report(y_test, y_prediction, target_names=target_names))
 
-plt.title('Receiver Operating features')
-plt.plot(fpr, tpr, 'r', label='AUC = %0.2f' % rocAuc)
-plt.legend(loc='lower right')
-plt.plot([0, 1], [0, 1], 'g--')
-plt.xlim([0, 1])
-plt.ylim([0, 1])
-plt.xlabel('False')
-plt.ylabel('True')
-plt.show()
+    # Draw the Confusion matrix
+    mat = metrics.confusion_matrix(y_test, y_prediction)
+    score = logist.score(X_test, y_test)
+    plt.figure(figsize=(6.5, 5))
+    sns.heatmap(mat, annot=True, fmt="g")
+    plt.title('LogisticRegression \nAccuracy:{0:.2f}'.format(score))
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.show()
 
-# Comparing the model accuracy with elo evaluation
-print("Metrics" + "\t\t" + "LRG Model" + "\t" + "Elo_prob1 Result")
-print("ROC_AUC Score: " + "\t" + "{:.5f}".format(roc_auc_score(y_test, y_predicted)) + "\t\t" + "{:.5f}".format(
-    roc_auc_score(test.result, test.elo_prob1)))
-print("Brier Score: " + "\t" + "{:.5f}".format(brier_score_loss(y_test, y_predicted)) + "\t\t" + "{:.5f}".format(
-    brier_score_loss(test.result, test.elo_prob1)))
+    # Finding the fpr and tpr for the threasholds of the classification
+    fpr, tpr, threshold = roc_curve(y_test, y_prediction)
+    rocAuc = auc(fpr, tpr)
 
-# Simulations
+    plt.title('Receiver Operating features')
+    plt.plot(fpr, tpr, 'r', label='AUC = %0.2f' % rocAuc)
+    plt.legend(loc='lower right')
+    plt.plot([0, 1], [0, 1], 'g--')
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.xlabel('FPR')
+    plt.ylabel('TPR')
+    plt.show()
 
-test.loc[:, 'hm_prob'] = y_predicted
-test = test[['schedule_season', 'schedule_week', 'team_home', 'team_away', 'elo_prob1', 'hm_prob', 'result']]
-test['my_bet_won'] = (
-            ((test.hm_prob <= 0.40) & (test.result == 0)) | ((test.hm_prob >= 0.60) & (test.result == 1))).astype(int)
-test['elo_bet_won'] = (
-            ((test.elo_prob1 >= 0.60) & (test.result == 1)) | ((test.elo_prob1 <= 0.40) & (test.result == 0))).astype(
-    int)
-test['my_bet_lost'] = (
-            ((test.hm_prob <= 0.40) & (test.result == 1)) | ((test.hm_prob >= 0.60) & (test.result == 0))).astype(int)
-test['elo_bet_lost'] = (
-            ((test.elo_prob1 >= 0.60) & (test.result == 0)) | ((test.elo_prob1 <= 0.40) & (test.result == 1))).astype(
-    int)
-print("Possible Games: " + str(len(test)))
-print("LRG model Win Percentage: " + "{:.4f}".format(
-    test.my_bet_won.sum() / (test.my_bet_lost.sum() + test.my_bet_won.sum())))
-print("Number of Bets Won: " + str(test.my_bet_won.sum()))
-print("Number of Bets Made: " + str((test.my_bet_lost.sum() + test.my_bet_won.sum())))
+    # Comparing the model accuracy with elo evaluation
+    print("Metrics" + "\t\t" + "LRG Model" + "\t" + "Elo_prob1 Result")
+    print("ROC_AUC Score: " + "\t" + "{:.5f}".format(roc_auc_score(y_test, y_predicted)) + "\t\t" + "{:.5f}".format(
+        roc_auc_score(test.result, test.elo_prob1)))
+    print("Brier Score: " + "\t" + "{:.5f}".format(brier_score_loss(y_test, y_predicted)) + "\t\t" + "{:.5f}".format(
+        brier_score_loss(test.result, test.elo_prob1)))
 
-print("Possible Games: " + str(len(test)))
-print("LRG model Win Percentage: " + "{:.4f}".format(
-    test.elo_bet_won.sum() / (test.elo_bet_lost.sum() + test.elo_bet_won.sum())))
-print("Number of Bets Won: " + str(test.elo_bet_won.sum()))
-print("Number of Bets Made: " + str((test.elo_bet_lost.sum() + test.elo_bet_won.sum())))
+    # Simulations
+
+    test.loc[:, 'hm_prob'] = y_predicted
+    test = test[['schedule_season', 'schedule_week', 'team_home', 'team_away', 'elo_prob1', 'hm_prob', 'result']]
+    test['my_bet_won'] = (
+                ((test.hm_prob <= 0.40) & (test.result == 0)) | ((test.hm_prob >= 0.60) & (test.result == 1))).astype(
+        int)
+    test['elo_bet_won'] = (((test.elo_prob1 >= 0.60) & (test.result == 1)) | (
+                (test.elo_prob1 <= 0.40) & (test.result == 0))).astype(int)
+    test['my_bet_lost'] = (
+                ((test.hm_prob <= 0.40) & (test.result == 1)) | ((test.hm_prob >= 0.60) & (test.result == 0))).astype(
+        int)
+    test['elo_bet_lost'] = (((test.elo_prob1 >= 0.60) & (test.result == 0)) | (
+                (test.elo_prob1 <= 0.40) & (test.result == 1))).astype(int)
+    print("Possible Games: " + str(len(test)))
+    print("LRG model Win Percentage: " + "{:.4f}".format(
+        test.my_bet_won.sum() / (test.my_bet_lost.sum() + test.my_bet_won.sum())))
+    print("Number of Bets Won: " + str(test.my_bet_won.sum()))
+    print("Number of Bets Made: " + str((test.my_bet_lost.sum() + test.my_bet_won.sum())))
+
+    print("Possible Games: " + str(len(test)))
+    print("ELO model Win Percentage: " + "{:.4f}".format(
+        test.elo_bet_won.sum() / (test.elo_bet_lost.sum() + test.elo_bet_won.sum())))
+    print("Number of Bets Won: " + str(test.elo_bet_won.sum()))
+    print("Number of Bets Made: " + str((test.elo_bet_lost.sum() + test.elo_bet_won.sum())))
+
+
+
+
+
+
+
+
+
+
